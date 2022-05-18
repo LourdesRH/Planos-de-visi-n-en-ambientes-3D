@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3.4 Planos de visión en ambientes 3D</title>
+</head>
+<body>
+    <button id="btnPlay">Play</button> 
+    <script type="module">
+
+        import * as THREE from './three.module.js';  //importación de archivo three
+        import {PointerLockControls} from './PointerLockControls.js' //importación del archivo Pointer
+
+        let camera, scene, renderer, pControl //controles de camara, escena y control
+        let xdir = 0, zdir = 0
+        let tiempoI, tiempoF, vel, delta
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff) // usamos un color de fondo, será blanco
+        scene.fog = new THREE.Fog(0xffffff, 0, 500) //efecto de neblina como si estuvierá alejado
+
+        scene.add(new THREE.GridHelper(10000, 1000)) //agregar un plano de referencia 
+       
+        //mesh para indicar nuestra figura geometrica 
+        let mesh = new THREE.Mesh(
+            new THREE.BoxGeometry(10,10,10), //nueva geometria y usamos la cajita, de tamaño 10
+            new THREE.MeshLambertMaterial({color: 0x0000ff}) //le indicamos el material y el color
+        )
+        mesh.position.z = -50 //indicamos la posicion en -50 para alejarlo de la pantalla 
+        scene.add(mesh)
+
+        scene.add(new THREE.HemisphereLight(0xffffff)) //agregamos una luz a nuestra escena
+        //luz para la cajita, sino, sale negra
+        
+        camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+        camera.position.y = 10  //posision de la camara, del suelo un poco levantada
+
+
+        //pixeles sin distorcion
+        renderer = new THREE.WebGLRenderer({antialias: true}); //tecnica para la visualizacion
+        //y disminuir la distorcion 
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setPixelRatio(window.devicePixelRatio) //recibir el parametro window y pasarle la propiedad
+        //para los pixiles
+        document.body.appendChild( renderer.domElement );
+
+
+        pControl = new PointerLockControls(camera, renderer.domElement) //recibe la camara y el render
+        //con eso ya creamos el control pero hay que activarlo. Entonces el botón que tenemos arriba
+        //a continuación lo mandamos a llamar por su ID
+
+        document.getElementById('btnPlay').onclick = ()=>{ //lo llamamos y cuando hagamos click se ejecuta
+            pControl.lock() //la función es el pControl y tiene el metodo lock para activación
+        }
+
+        document.addEventListener('keydown', (e)=>{   
+            switch (e.keyCode) {
+                case 37:
+                    xdir = -1
+                    break;
+                case 38:
+                    zdir = 1
+                    break;
+                case 39:
+                    xdir = 1
+                    break;
+                case 40:
+                    zdir = -1
+                    break;
+            }
+        })
+
+        document.addEventListener('keyup', (e)=>{
+            switch (e.keyCode) {
+                case 37:
+                    xdir = 0
+                    break;
+                case 38:
+                    zdir = 0
+                    break;
+                case 39:
+                    xdir = 0
+                    break;
+                case 40:
+                    zdir = 0
+                    break;
+            }
+        })
+
+        tiempoI = Date.now()
+        vel = 50
+
+        animate() //lo mandamos a llamar
+
+        function animate() {  //creamos la funciona animacion
+
+            requestAnimationFrame( animate ); //tener efecto de ciclo repetitivo
+            //esto hace el movimiento y poder girar la escena con solo mover el mouse
+
+            if(pControl.isLocked === true){
+                tiempoF = Date.now()
+
+                delta = (tiempoF - tiempoI)/1000
+
+                let xDis = xdir * vel * delta
+                let zDis = zdir * vel * delta
+
+                pControl.moveRight(xDis)
+                pControl.moveForward(zDis)
+
+                tiempoI = tiempoF
+            }
+
+            renderer.render( scene, camera ); //renderizamos la camara y la scena 
+        }
+
+
+    </script>
+</body>
+</html>
